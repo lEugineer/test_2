@@ -20,9 +20,9 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 
 public class CalcMain {
-    public static void main(String[] args) throws IOException {
+    public static void main ( String[] args ) throws IOException {
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader reader = new BufferedReader( new InputStreamReader( System.in ) );
         String input;
         while ((input = reader.readLine()) != null) {
             if (input.isEmpty()) {
@@ -30,10 +30,10 @@ public class CalcMain {
             }
 
             try {
-                BigDecimal result = Calculator.evaluateExpression(input);
-                System.out.println(input + " = " + result);
+                BigDecimal result = Calculator.evaluateExpression( input );
+                System.out.println( input + " = " + result );
             } catch (Exception e) {
-                System.out.println(input + " : " + e.getMessage());
+                System.out.println( input + " : " + e.getMessage() );
             }
         }
     }

@@ -4,7 +4,6 @@ import grep.matcher.Matcher;
 import grep.matcher.MatcherStrategy;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,10 +23,9 @@ import java.util.List;
  */
 
 public class GrepCmd {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         if (args.length == 0) {
-            System.out.println("At least one search pattern required");
-            return;
+            throw new IllegalArgumentException( "At least one search pattern required" );
         }
 
         List<MatcherStrategy> patterns = buildMatchers(args);
