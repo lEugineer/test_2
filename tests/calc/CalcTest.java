@@ -17,6 +17,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(Parameterized.class)
 public class CalcTest {
 
+    private static final Calculator calc = new Calculator();
     private static final InputStream sysIn = System.in;
     private static final OutputStream sysOut = System.out;
     private static final ByteArrayOutputStream byteOut = new ByteArrayOutputStream(  );
@@ -31,7 +32,7 @@ public class CalcTest {
         return Arrays.asList(new Object[][] {
                 {"2 + 2 * 2", "6"},
                 {"2 * - 2", "-4"},
-                {"-2 +-2", "-4"},
+                {"- 2 +-2", "-4"},
                 {"2 + 2 -2", "2"},
                 {"(4 + 3) * 2 ^ -2", "1.75"},
                 {"(17 ^ 4 + 5 * 974 ^ 33 + 2.24 * 4,75)^0", "1"},
@@ -66,7 +67,7 @@ public class CalcTest {
         System.setIn(new ByteArrayInputStream( expr.getBytes() ));
 
         try {
-            BigDecimal result = Calculator.evaluateExpression( expr );
+            BigDecimal result = calc.evaluateExpression( expr );
             assertEquals( this.result, result.toString() );
         } catch (Exception e) {
             assertEquals( this.result, e.getMessage() );

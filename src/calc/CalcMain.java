@@ -24,13 +24,14 @@ public class CalcMain {
 
         BufferedReader reader = new BufferedReader( new InputStreamReader( System.in ) );
         String input;
+        Calculator calc = new Calculator();
         while ((input = reader.readLine()) != null) {
             if (input.isEmpty()) {
                 break;
             }
 
             try {
-                BigDecimal result = Calculator.evaluateExpression( input );
+                BigDecimal result = calc.evaluateExpression( input );
                 System.out.println( input + " = " + result );
             } catch (Exception e) {
                 System.out.println( input + " : " + e.getMessage() );

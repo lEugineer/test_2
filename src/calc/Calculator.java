@@ -12,129 +12,155 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class Calculator {
+public class Calculator {
 
-    private Calculator(){}
-
-    public static BigDecimal evaluateExpression ( String expr ) throws IllegalArgumentException {
+    public BigDecimal evaluateExpression ( String expr ) throws IllegalArgumentException {
         List<String> tokens = parseExpression( expr );
-        List<String> rpnExpression = infixToRPN( tokens );
+        List<String> rpnExpression = convertToRPN( tokens );
         return evaluateRPN( rpnExpression );
     }
 
-    private static List<String> parseExpression ( String expr ) {
-
+    private List<String> parseExpression ( String expr ) {
         List<String> tokens = new LinkedList<>();
-        StringBuilder numberConstructor = new StringBuilder();
 
         expr = expr.replaceAll( ",", "." );
+        List<Integer> negNumIdxsList = getAllNegNumIdxs( expr );
 
-        List<Integer> negNumIdxsList = getNegativeNumbersIndexes( expr );
+        int currentCharIdx = 0;
+        while (currentCharIdx < expr.length()) {
 
-        for (int i = 0; i < expr.length(); i++) {
+            currentCharIdx = processIfNegNum( expr, tokens, negNumIdxsList, currentCharIdx );
 
-            if (negNumIdxsList.size() > 0 && negNumIdxsList.get( 0 ) == i) {
-                negNumIdxsList.remove( 0 );
+            currentCharIdx = processIfNum( expr, tokens, currentCharIdx );
 
-
-                if (tokens.size() == 0
-                || Operators.isOperatorSign( tokens.get( tokens.size() - 1 ) )) {
-                    // If last token is an operator
-                    // consider '-' as a number sign
-
-                    StringBuilder buf = buildNegativeOperand( expr, i );
-                    i += buf.length() - 1;
-
-                    saveOperandClearBuilder( buf, tokens );
-
-                    continue;
-                }
-            }
-
-            char c = expr.charAt( i );
-
-            if (isNumberSign( c )) {
-                numberConstructor.append( c );
-                continue;
-            }
-            //save previously constructed number
-            saveOperandClearBuilder( numberConstructor, tokens );
-
-            if (Operators.isOperatorSign( c )) {
-                tokens.add( String.valueOf( c ));
-                continue;
-            }
-
-            if (isBracketSign( c )) {
-                tokens.add( String.valueOf( c ) );
-                continue;
-            }
-
-            if (c != ' ') {
-                throw new IllegalArgumentException( ExceptionMessages.INCORRECT_EXPRESSION.getMessage() );
-            }
+            currentCharIdx = processIfOperator( expr, tokens, currentCharIdx );
         }
-        saveOperandClearBuilder( numberConstructor, tokens );
 
         return tokens;
     }
 
-    private static boolean isNumberSign ( char c ) {
-        return (c >= '0' && c <= '9') || c == '.';
-    }
-
-    private static boolean isBracketSign ( char c ) {
-        return c == '(' || c == ')';
-    }
-
-    private static List<Integer> getNegativeNumbersIndexes ( String expr ) {
-        List<Integer> negativeNumbersIndexes = new LinkedList<>();
-        Pattern p = Pattern.compile( "-\\s?\\d" );
-        Matcher m = p.matcher( expr );
-        while (m.find()) {
-            negativeNumbersIndexes.add( m.start() );
+    private int processIfNum ( String expr, List<String> tokens, int charIdx) {
+        if (charIdx >= expr.length()) {
+            return charIdx;
         }
-        return negativeNumbersIndexes;
-    }
 
-    private static StringBuilder buildNegativeOperand ( String expr, Integer currentCharIndex ) {
-        StringBuilder buf = new StringBuilder();
-        buf.append( "-" );
-        ++currentCharIndex;
+        char c = expr.charAt( charIdx );
+        if (!isNumberSign( c )) return charIdx;
 
-//        while (expr.charAt( currentCharIndex ) == ' '
-//            && currentCharIndex < expr.length()) {
-//            ++currentCharIndex;
-//        }
+        StringBuilder numBuilder = new StringBuilder();
+        numBuilder.append( c );
+        ++charIdx;
 
-        for (; currentCharIndex < expr.length(); ++currentCharIndex) {
-            char c = expr.charAt( currentCharIndex );
-            if (isNumberSign( c )) {
-                buf.append( c );
-            } else {
+        while (charIdx < expr.length()) {
+            c = expr.charAt( charIdx );
+            if (!isNumberSign( c ))
                 break;
-            }
+
+            numBuilder.append( c );
+            ++charIdx;
         }
 
-        if (buf.length() < 2) {
+        saveOperand( numBuilder, tokens );
+
+        return charIdx;
+    }
+
+    private int processIfOperator ( String expr, List<String> tokens, int charIdx) {
+        if (charIdx >= expr.length()) {
+            return charIdx;
+        }
+
+        char c = expr.charAt( charIdx );
+
+        if (Operators.isOperatorSign( c )
+        || isBracketSign( c )) {
+            tokens.add( String.valueOf( c ));
+        } else
+
+        if (c != ' ') {
             throw new IllegalArgumentException( ExceptionMessages.INCORRECT_EXPRESSION.getMessage() );
         }
 
-        return buf;
+        return ++charIdx;
     }
 
-    private static void saveOperandClearBuilder ( StringBuilder operand, List<String> tokens ) {
-        if (operand.length() == 0) {
+    private int processIfNegNum ( String expr, List<String> tokens, List<Integer> negNumIdxsList, int charIdx) {
+        if (negNumIdxsList.size() == 0
+        || negNumIdxsList.get( 0 ) != charIdx) {
+            return charIdx;
+        }
+        negNumIdxsList.remove( 0 );
+
+        if (tokens.size() == 0
+        || Operators.isOperatorSign( tokens.get( tokens.size() - 1 ) )) {
+
+            StringBuilder numBuilder = new StringBuilder();
+            charIdx = buildNegativeOperand( expr, charIdx, numBuilder );
+
+            saveOperand( numBuilder, tokens );
+        }
+
+        return charIdx;
+    }
+
+    private int buildNegativeOperand ( String expr, Integer charIdx, StringBuilder numBuilder ) {
+        numBuilder.append( "-" );
+        ++charIdx;
+
+        while (charIdx < expr.length()
+        && expr.charAt( charIdx ) == ' ') {
+            ++charIdx;
+        }
+
+        while ( charIdx < expr.length()) {
+            char c = expr.charAt( charIdx );
+
+            if (isNumberSign( c )) {
+                numBuilder.append( c );
+            } else {
+                break;
+            }
+
+            ++charIdx;
+        }
+
+        if (numBuilder.length() < 2) {
+            throw new IllegalArgumentException( ExceptionMessages.INCORRECT_EXPRESSION.getMessage() );
+        }
+
+        return charIdx;
+    }
+
+    private boolean isNumberSign ( char c ) {
+        return (c >= '0' && c <= '9') || c == '.';
+    }
+
+    private boolean isBracketSign ( char c ) {
+        return c == '(' || c == ')';
+    }
+
+    private List<Integer> getAllNegNumIdxs ( String expr ) {
+        List<Integer> negNumIdxs = new LinkedList<>();
+
+        Pattern p = Pattern.compile( "-\\s?\\d" );
+        Matcher m = p.matcher( expr );
+
+        while (m.find()) {
+            negNumIdxs.add( m.start() );
+        }
+
+        return negNumIdxs;
+    }
+
+    private void saveOperand ( StringBuilder operand, List<String> tokens ) {
+        if (operand == null || operand.length() == 0) {
             return;
         }
 
         tokens.add( operand.toString() );
-
-        operand.setLength( 0 );
-        operand.delete( 0, operand.length() );
     }
 
-    private static List<String> infixToRPN ( List<String> inputTokens ) {
+    private List<String> convertToRPN ( List<String> inputTokens ) {
         List<String> out = new ArrayList<>();
         Stack<String> stack = new Stack<>();
         int operatorsCount = 0;
@@ -146,15 +172,17 @@ public final class Calculator {
 
                 Operator currentOperator = Operators.getOperator( token );
                 while (!stack.empty() && Operators.isOperatorSign( stack.peek() )) {
+
                     Operator stackOperator = Operators.getOperator( stack.peek() );
 
-                    if (currentOperator.getPrecedence() <= stackOperator.getPrecedence()
-                    && (currentOperator.getAssociativity() == Associativity.LEFT)) {
-                        out.add( stack.pop() );
-                        continue;
+                    if (currentOperator.getPrecedence() > stackOperator.getPrecedence()
+                    || (currentOperator.getAssociativity() != Associativity.LEFT)) {
+                        break;
                     }
-                    break;
+
+                    out.add( stack.pop() );
                 }
+
                 stack.push( token );
             } else if (token.equals( "(" )) {
                 stack.push( token );
@@ -182,7 +210,7 @@ public final class Calculator {
         return out;
     }
 
-    private static BigDecimal evaluateRPN ( List<String> tokens ) {
+    private BigDecimal evaluateRPN ( List<String> tokens ) {
         Stack<BigDecimal> stack = new Stack<>();
 
         for (String token : tokens) {

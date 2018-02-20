@@ -5,6 +5,7 @@ import grep.matcher.MatcherStrategy;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -22,15 +23,13 @@ import java.util.List;
 //        args = new String[] {"pqrst"};
  */
 
-public class GrepCmd {
+public class Grep {
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             throw new IllegalArgumentException( "At least one search pattern required" );
         }
 
-        List<MatcherStrategy> patterns = buildMatchers(args);
         List<String> inputLines = new LinkedList<>();
-
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String input;
         while ((input = reader.readLine()) != null) {
@@ -40,11 +39,21 @@ public class GrepCmd {
             inputLines.add(input);
         }
 
-        for (String line : inputLines) {
+        List<String> result = findAll(inputLines, Arrays.asList(args));
+        result.forEach( System.out::println );
+    }
+
+    public static List<String> findAll (List<String> input, List<String> filters) {
+        List<MatcherStrategy> patterns = buildMatchers(filters);
+
+        List<String> result = new LinkedList<>();
+        for (String line : input) {
             if (isMatchAny(line, patterns)) {
-                System.out.println(line);
+                result.add(line);
             }
         }
+
+        return result;
     }
 
     private static boolean isMatchAny(String line, List<MatcherStrategy> patterns) {
@@ -65,7 +74,7 @@ public class GrepCmd {
         return false;
     }
 
-    private static List<MatcherStrategy> buildMatchers(String[] patterns) {
+    private static List<MatcherStrategy> buildMatchers(List<String> patterns) {
         List<MatcherStrategy> matchers = new LinkedList<>();
         for (String pattern : patterns) {
             matchers.add(Matcher.getMatcherStrategy(pattern));

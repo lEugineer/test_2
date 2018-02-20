@@ -16,7 +16,11 @@ public class GrepTest {
     private static final OutputStream sysOut = System.out;
 
     private static final ByteArrayInputStream byteIn = new ByteArrayInputStream(
-            "abcdf;\nabcd abc;\nbcd adbc abc;\nghij abcd * acdf;\nab ac ad;\n".getBytes()
+            ("abcdf;\n" +
+            "abcd abc;\n" +
+            "bcd adbc abc;\n" +
+            "ghij abcd * acdf;\n" +
+            "ab ac ad;\n").getBytes()
     );
     private static final ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
 
@@ -43,7 +47,7 @@ public class GrepTest {
     @Test
     public void testNoArguments () {
         try {
-            GrepCmd.main( new String[0] );
+            Grep.main( new String[0] );
             fail();
         } catch (Exception e) {
             if ( !(e instanceof IllegalArgumentException) ) {
@@ -55,7 +59,7 @@ public class GrepTest {
     @Test
     public void testSingleArg () {
         try {
-            GrepCmd.main( new String[]{"abcd"} );
+            Grep.main( new String[]{"abcd"} );
 
             assertEquals( "abcd abc;\nghij abcd * acdf;\n", byteOut.toString() );
         } catch (Exception e) {
@@ -66,7 +70,7 @@ public class GrepTest {
     @Test
     public void testMultipleArgs () {
         try {
-            GrepCmd.main( new String[] {"abcd", "abc"} );
+            Grep.main( new String[] {"abcd", "abc"} );
 
             assertEquals( "abcd abc;\nbcd adbc abc;\nghij abcd * acdf;\n", byteOut.toString() );
         } catch (Exception e) {
@@ -77,7 +81,7 @@ public class GrepTest {
     @Test
     public void testRegularExpr () {
         try {
-            GrepCmd.main( new String[] {"^ab.+"} );
+            Grep.main( new String[] {"^ab.+"} );
 
             assertEquals( "abcdf;\nabcd abc;\nbcd adbc abc;\nghij abcd * acdf;\n", byteOut.toString() );
         } catch (Exception e) {
@@ -88,7 +92,7 @@ public class GrepTest {
     @Test
     public void testIncorrectRegularExpr () {
         try {
-            GrepCmd.main( new String[]{"*"} );
+            Grep.main( new String[]{"*"} );
 
             assertEquals( "ghij abcd * acdf;\n", byteOut.toString() );
         } catch (Exception e) {
@@ -99,7 +103,7 @@ public class GrepTest {
     @Test
     public void testNotExist () {
         try {
-            GrepCmd.main( new String[] {"pqrst"} );
+            Grep.main( new String[] {"pqrst"} );
 
             assertEquals( "", byteOut.toString() );
         } catch (Exception e) {
