@@ -11,8 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
-import static calc.operations.ArithmeticSigns.LBR;
-import static calc.operations.ArithmeticSigns.RBR;
+import static calc.operations.ArithmeticSigns.*;
 
 public class Calculator {
 
@@ -27,25 +26,37 @@ public class Calculator {
 
         expr = expr.replaceAll( ",", "." );
 
-        int currentCharIdx = 0;
-        while (currentCharIdx < expr.length()) {
+        char c;
+        ArithmeticSigns sign;
+        int bracketBalance = 0;
 
-            currentCharIdx = processIfOperand( expr, tokens, currentCharIdx );
+        for (int currentCharIdx = 0; currentCharIdx < expr.length(); currentCharIdx++) {
+            c = expr.charAt( currentCharIdx );
 
-            currentCharIdx = processIfOperator( expr, tokens, currentCharIdx );
+            if (isNumberSign( c )) {
+                currentCharIdx = saveOperand( expr, tokens, currentCharIdx );
+            } else if ( (sign = getArithmeticSign( c )) != null ) {
+                if (sign == LBR) {
+                    ++bracketBalance;
+                } else if (sign == RBR) {
+                    --bracketBalance;
+                }
+                saveOperator( sign, tokens );
+            } else if ( !Character.isSpaceChar( c ) ) {
+                throw new IllegalArgumentException( ExceptionMessages.INCORRECT_EXPRESSION.getMessage() );
+            }
+        }
+
+        if (bracketBalance != 0) {
+            throw new IllegalArgumentException( ExceptionMessages.BRACKET_MISSED.getMessage() );
         }
 
         return tokens;
     }
 
-    private int processIfOperand ( String expr, List<String> tokens, int charIdx) {
-        if (charIdx >= expr.length()) {
-            return charIdx;
-        }
+    private int saveOperand ( String expr, List<String> tokens, int charIdx) {
 
         char c = expr.charAt( charIdx );
-        if (!isNumberSign( c )) return charIdx;
-
         StringBuilder numBuilder = new StringBuilder();
         numBuilder.append( c );
         ++charIdx;
@@ -59,41 +70,21 @@ public class Calculator {
             ++charIdx;
         }
 
-        saveOperand( numBuilder, tokens );
+        tokens.add( numBuilder.toString() );
 
-        return charIdx;
+        return --charIdx;
     }
 
-    private int processIfOperator ( String expr, List<String> tokens, int charIdx) {
-        if (charIdx >= expr.length()) {
-            return charIdx;
+    private void saveOperator ( ArithmeticSigns sign, List<String> tokens) {
+        if (sign == ADD  && isUnarOperator( tokens )) {
+            return;
         }
 
-        char c = expr.charAt( charIdx );
-
-        if (!ArithmeticSigns.isArithmeticSign( c )) {
-            if (!Character.isSpaceChar( c ))
-                throw new IllegalArgumentException( ExceptionMessages.INCORRECT_EXPRESSION.getMessage() );
-            else
-               return ++charIdx;
+        if (sign == SUB && isUnarOperator( tokens )) {
+            sign = NEG;
         }
 
-        if (c == ArithmeticSigns.ADD.getChar()
-        && isUnarOperator( tokens )) {
-            return ++charIdx;
-        }
-
-        if (c == ArithmeticSigns.SUB.getChar()) {
-            if (isUnarOperator( tokens )) {
-                tokens.add( ArithmeticSigns.NEG.toString() );
-            } else {
-                tokens.add( ArithmeticSigns.SUB.toString() );
-            }
-        } else {
-            tokens.add( String.valueOf( c ));
-        }
-
-        return ++charIdx;
+        tokens.add( sign.toString() );
     }
 
     private boolean isUnarOperator ( List<String> tokens) {
@@ -101,7 +92,7 @@ public class Calculator {
         // последний токен - '(', значит UNAR
         // последний токен - оператор, значит UNAR
         return tokens.size() == 0
-                || tokens.get( tokens.size() - 1 ).equals( ArithmeticSigns.LBR.toString() )
+                || tokens.get( tokens.size() - 1 ).equals( LBR.toString() )
                 || Operators.isOperatorSign( tokens.get( tokens.size() - 1 ) );
     }
 
@@ -109,19 +100,12 @@ public class Calculator {
         return (c >= '0' && c <= '9') || c == '.';
     }
 
-    private boolean isBracketSign ( char c ) {
-        return c == LBR.getChar() || c == RBR.getChar();
-    }
+    private List<String> convertToRPN ( List<String> inputTokens ) {
 
-    private void saveOperand ( StringBuilder operand, List<String> tokens ) {
-        if (operand == null || operand.length() == 0) {
-            return;
+        if (inputTokens.size() < 1) {
+            throw new IllegalArgumentException( ExceptionMessages.INCORRECT_EXPRESSION.getMessage() );
         }
 
-        tokens.add( operand.toString() );
-    }
-
-    private List<String> convertToRPN ( List<String> inputTokens ) {
         List<String> out = new ArrayList<>();
         Stack<String> stack = new Stack<>();
 
@@ -167,27 +151,27 @@ public class Calculator {
         Stack<BigDecimal> stack = new Stack<>();
 
         for (String token : tokens) {
-            Operator o = Operators.getOperator( token );
-            if ( o == null ) {
+            Operator operator = Operators.getOperator( token );
+            if ( operator == null ) {
                 stack.push( new BigDecimal( token ) );
             } else {
-                if (stack.size() < o.getRequiredOperandsCount()) {
-                    throw new IllegalArgumentException( ExceptionMessages.INCORRECT_EXPRESSION.getMessage() );
+                if (stack.size() < operator.getRequiredOperandsCount()) {
+                    throw new IllegalArgumentException( ExceptionMessages.OPERAND_MISSED.getMessage() );
                 }
 
-                BigDecimal[] operands = new BigDecimal[ o.getRequiredOperandsCount() ];
-                for(int i = o.getRequiredOperandsCount()-1; i >= 0 ; --i ) {
+                BigDecimal[] operands = new BigDecimal[ operator.getRequiredOperandsCount() ];
+                for(int i = operator.getRequiredOperandsCount()-1; i >= 0 ; --i ) {
                     operands[i] = stack.pop();
                 }
 
-                BigDecimal result = Operators.doMath( token, operands );
+                BigDecimal result = operator.with( operands );
 
                 stack.push( result );
             }
         }
 
         if (stack.size() != 1) {
-            throw new IllegalArgumentException( ExceptionMessages.INCORRECT_EXPRESSION.getMessage() );
+            throw new IllegalArgumentException( ExceptionMessages.OPERATOR_MISSED.getMessage() );
         }
 
         return stack.pop();

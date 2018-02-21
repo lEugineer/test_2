@@ -38,17 +38,17 @@ public class CalcTest {
                 {"-(-2 ---+2)", "4"},
                 {"-2 *++++---+2", "4"},
                 {"(4 + 3) * 2 ^ -2", "1.75"},
-                {"(17 ^ 4 + 5 * 974 ^ 33 + 2.24 * 4,75)^0", "1"},
-                {"1.2^1.2", "1.244564747"},
-                {"123456789123456789 ^ 2", "1.524157878067367851562262075019052E+34"},
-                {"123456789123456789 ^ -2", "6.561000106288201410811846848805654E-35"},
+                {"(17 ^ 4 + 5 * 974 ^ 33 + 2.24 * 4,75)^0", "1.0"},
+                {"1.2^1.2", "1.2445647472039776"},
+                {"123456789123456789 ^ 2", "1.5241578780673678E+34"},
+                {"123456789123456789 ^ -2", "6.561000106288202E-35"},
                 {"", ExceptionMessages.INCORRECT_EXPRESSION.getMessage()},
                 {"5 + 1/0", ExceptionMessages.DIVISION_BY_ZERO.getMessage()},
-                {"4 2 * 3", ExceptionMessages.INCORRECT_EXPRESSION.getMessage()},
+                {"4 2 * 3", ExceptionMessages.OPERATOR_MISSED.getMessage()},
                 {"4a * 5", ExceptionMessages.INCORRECT_EXPRESSION.getMessage()},
                 {"5 + a", ExceptionMessages.INCORRECT_EXPRESSION.getMessage()},
-                {"5 ---", ExceptionMessages.INCORRECT_EXPRESSION.getMessage()},
-                {"(5 -2", ExceptionMessages.INCORRECT_EXPRESSION.getMessage()}
+                {"5 ---", ExceptionMessages.OPERAND_MISSED.getMessage()},
+                {"(5 -2", ExceptionMessages.BRACKET_MISSED.getMessage()}
         });
     }
 
