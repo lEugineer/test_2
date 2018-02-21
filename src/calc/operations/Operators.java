@@ -12,45 +12,66 @@ public class Operators {
     private static final Map<String, Operator> operators = new HashMap<>();
 
     static {
-        Operator o = new Operator( "+", 2, Associativity.LEFT ) {
-            @Override
-            public BigDecimal with ( BigDecimal arg1, BigDecimal arg2 ) {
-                return arg1.add( arg2 );
-            }
-        };
-        operators.put( o.getOperatorSymbol(), o );
+        operators.put( String.valueOf( ArithmeticSigns.ADD.getChar() ),
+                new Operator( ArithmeticSigns.ADD.getChar(), 2, Associativity.LEFT, 2 ) {
+                    @Override
+                    public BigDecimal with ( BigDecimal... args ) {
+                        if (args.length != 2)
+                            throw new IllegalArgumentException( ExceptionMessages.INVALID_ARGUMENTS.getMessage() );
+                        return args[0].add( args[1] );
+                    }
+                });
 
-        o = new Operator( "-", 2, Associativity.LEFT ) {
-            @Override
-            public BigDecimal with ( BigDecimal arg1, BigDecimal arg2 ) {
-                return arg1.subtract( arg2 );
-            }
-        };
-        operators.put( o.getOperatorSymbol(), o );
+        operators.put( String.valueOf( ArithmeticSigns.SUB.getChar() ),
+                new Operator( ArithmeticSigns.SUB.getChar(), 2, Associativity.LEFT, 2 ) {
+                    @Override
+                    public BigDecimal with ( BigDecimal... args ) {
+                        if (args.length != 2)
+                            throw new IllegalArgumentException( ExceptionMessages.INVALID_ARGUMENTS.getMessage() );
+                        return args[0].subtract( args[1] );
+                    }
+                });
 
-        o = new Operator( "*", 3, Associativity.LEFT ) {
-            @Override
-            public BigDecimal with ( BigDecimal arg1, BigDecimal arg2 ) {
-                return arg1.multiply( arg2 );
-            }
-        };
-        operators.put( o.getOperatorSymbol(), o );
+        operators.put( String.valueOf( ArithmeticSigns.MUL.getChar() ),
+                new Operator( ArithmeticSigns.MUL.getChar(), 3, Associativity.LEFT, 2 ) {
+                    @Override
+                    public BigDecimal with ( BigDecimal... args ) {
+                        if (args.length != 2)
+                            throw new IllegalArgumentException( ExceptionMessages.INVALID_ARGUMENTS.getMessage() );
+                        return args[0].multiply( args[1] );
+                    }
+                });
 
-        o = new Operator( "/", 3, Associativity.LEFT ) {
-            @Override
-            public BigDecimal with ( BigDecimal arg1, BigDecimal arg2 ) {
-                return arg1.divide( arg2 );
-            }
-        };
-        operators.put( o.getOperatorSymbol(), o );
+        operators.put( String.valueOf( ArithmeticSigns.DIV.getChar() ),
+                new Operator( ArithmeticSigns.DIV.getChar(), 3, Associativity.LEFT, 2 ) {
+                    @Override
+                    public BigDecimal with ( BigDecimal... args ) {
+                        if (args.length != 2)
+                            throw new IllegalArgumentException( ExceptionMessages.INVALID_ARGUMENTS.getMessage() );
+                        return args[0].divide( args[1] );
+                    }
+                });
 
-        o = new Operator( "^", 4, Associativity.RIGHT ) {
-            @Override
-            public BigDecimal with ( BigDecimal arg1, BigDecimal arg2 ) {
-                return arg1.pow( arg2.intValue(), MathContext.DECIMAL128 );
-            }
-        };
-        operators.put( o.getOperatorSymbol(), o );
+        operators.put( String.valueOf( ArithmeticSigns.POW.getChar() ),
+                new Operator( ArithmeticSigns.POW.getChar(), 4, Associativity.RIGHT, 2 ) {
+                    @Override
+                    public BigDecimal with ( BigDecimal... args ) {
+                        if (args.length != 2)
+                            throw new IllegalArgumentException( ExceptionMessages.INVALID_ARGUMENTS.getMessage() );
+
+                        return args[0].pow( args[1].intValue(), MathContext.DECIMAL128 );
+                    }
+                });
+
+        operators.put( String.valueOf( ArithmeticSigns.NEG.getChar() ),
+                new Operator( ArithmeticSigns.NEG.getChar(), 4, Associativity.RIGHT, 1 ) {
+                    @Override
+                    public BigDecimal with ( BigDecimal... args ) {
+                        if (args.length != 1)
+                            throw new IllegalArgumentException( ExceptionMessages.INVALID_ARGUMENTS.getMessage() );
+                        return args[0].negate();
+                    }
+                });
     }
 
 
@@ -66,13 +87,13 @@ public class Operators {
         return operators.get( key );
     }
 
-    public static BigDecimal doMath ( String key, BigDecimal arg1, BigDecimal arg2 ) throws IllegalArgumentException {
+    public static BigDecimal doMath ( String key, BigDecimal... args) throws IllegalArgumentException {
         Operator operation = operators.get( key );
 
         if (operation == null) {
             throw new IllegalArgumentException( key + " : " + ExceptionMessages.OPERATOR_NOT_SUPPORTED.getMessage() );
         }
 
-        return operation.with( arg1, arg2 );
+        return operation.with( args );
     }
 }

@@ -4,17 +4,21 @@ import java.math.BigDecimal;
 import java.util.Objects;
 
 public abstract class Operator {
-    private final String operatorSymbol;
+    private final Character operatorSymbol;
     private final int precedence;
     private final Associativity associativity;
+    private final int requiredOperandsCount;
 
-    Operator ( String operatorSymbol, int precedence, Associativity associativity ) {
+    Operator ( Character operatorSymbol, int precedence, Associativity associativity, int requiredOperandsCount ) {
         this.operatorSymbol = operatorSymbol;
         this.precedence = precedence;
         this.associativity = associativity;
+        this.requiredOperandsCount = requiredOperandsCount;
     }
 
-    public String getOperatorSymbol () {
+    public abstract BigDecimal with ( BigDecimal... args );
+
+    public Character getOperatorSign () {
         return operatorSymbol;
     }
 
@@ -26,18 +30,21 @@ public abstract class Operator {
         return associativity;
     }
 
-    public abstract BigDecimal with ( BigDecimal arg1, BigDecimal arg2 );
+    public int getRequiredOperandsCount () {
+        return requiredOperandsCount;
+    }
 
     @Override
     public boolean equals ( Object o ) {
         if (this == o) return true;
         if (!(o instanceof Operator)) return false;
         Operator operator = (Operator) o;
-        return Objects.equals( getOperatorSymbol(), operator.getOperatorSymbol() );
+        return Objects.equals( getOperatorSign(), operator.getOperatorSign() );
     }
 
     @Override
     public int hashCode () {
-        return getOperatorSymbol().hashCode();
+        return getOperatorSign().hashCode();
     }
+
 }
